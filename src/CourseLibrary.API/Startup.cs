@@ -32,6 +32,9 @@ namespace CourseLibrary.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddResponseCaching();
+
             services.AddDbContext<CourseLibraryContext>(options =>
             {
                 options.UseSqlServer(
@@ -51,6 +54,12 @@ namespace CourseLibrary.API
                 options.ReturnHttpNotAcceptable = true;
                 // MVC com restrição de XML e adição de filtro de ações.
                 // options.OutputFormatters.Remove(new XmlDataContractSerializerOutputFormatter());
+
+                options.CacheProfiles.Add("120SecondsChaceProfile",
+                    new CacheProfile()
+                    {
+                        Duration = 120
+                    });
 
             })
             .AddJsonOptions((options) =>
@@ -85,8 +94,21 @@ namespace CourseLibrary.API
             })
             .AddXmlDataContractSerializerFormatters(); // permite response and request no formato xml
 
+            // permitir o fromHeader Accept
+            services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                        .OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+
+                if (newtonsoftJsonOutputFormatter != null)
+                {
+                    newtonsoftJsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.marvin.hateoas+json");
+                }
+            });
 
             services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
+            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+            services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
@@ -112,7 +134,8 @@ namespace CourseLibrary.API
                 });
             }
 
-            app.UseHttpsRedirection();
+            app.UseResponseCaching();
+            // app.UseHttpsRedirection();
 
             app.UseRouting();
 

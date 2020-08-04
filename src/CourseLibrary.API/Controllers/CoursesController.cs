@@ -18,6 +18,7 @@ namespace CourseLibrary.API.Controllers
 {
     [Route("api/authors/{authorId}/courses")]
     [ApiController]
+    [ResponseCache(CacheProfileName = "120SecondsChaceProfile")]
     public class CoursesController : ControllerBase
     {
         private readonly ICourseLibraryRepository _courseLibraryRepository;
@@ -31,8 +32,9 @@ namespace CourseLibrary.API.Controllers
                 throw new ArgumentNullException(nameof(mapper));
         }
 
-        [Route("", Name = nameof(GetCoursesForAuthor))]
-        [HttpGet]
+        //[Route("", Name = nameof(GetCoursesForAuthor))]
+        [HttpGet(Name = nameof(GetCoursesForAuthor))]
+        [ResponseCache(Duration = 60)]
         public ActionResult<IEnumerable<CourseDto>> GetCoursesForAuthor(Guid authorId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
@@ -53,6 +55,7 @@ namespace CourseLibrary.API.Controllers
 
         [Route("{courseId}", Name = nameof(GetCourseForAuthor))]
         [HttpGet]
+        [ResponseCache(Duration = 60)]
         public ActionResult<CourseDto> GetCourseForAuthor(Guid authorId, Guid courseId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
@@ -93,7 +96,7 @@ namespace CourseLibrary.API.Controllers
                 courseToReturn);
         }
 
-        [HttpPut("{courseId}")]
+        [HttpPut("{courseId}", Name = nameof(UpdateCourseForAuthor))]
         public IActionResult UpdateCourseForAuthor(Guid authorId,
           Guid courseId,
           CourseForUpdateDto course)
@@ -246,6 +249,8 @@ namespace CourseLibrary.API.Controllers
             var options = HttpContext.RequestServices.GetRequiredService<IOptions<ApiBehaviorOptions>>();
             return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
+
+
 
     }
 }
